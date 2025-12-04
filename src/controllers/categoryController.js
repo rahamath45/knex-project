@@ -2,13 +2,14 @@ const db = require("../config/db");
 
 exports.createCategory = async(req,res) =>{
     try{
-         if(!name || !slug){
+         
+        const{ name, slug} = req.body;
+        if(!name || !slug){
         return res.status(400),json({
             status:"error",
              message:"those field are required "
         })
     }
-        const{ name, slug} = req.body;
         const [id] = await db('categories').insert({ name ,slug});
         const cat = await db('categories').where({ id }).first();
         res.status(201).json(cat);
@@ -39,14 +40,14 @@ exports.getCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   try {
-    if(!name || !slug){
-        return res.status(400),json({
-            status:"error",
-             message:"those field are required "
-        })
-    }
-    const { name, slug } = req.body;  // only allowed fields
-
+      const { name, slug } = req.body;  // only allowed fields
+      
+      if(!name || !slug){
+          return res.status(400),json({
+              status:"error",
+               message:"those field are required "
+          })
+      }
     await db('categories')
       .where({ id: req.params.id })
       .update({ name, slug });

@@ -3,6 +3,13 @@ const db = require("../config/db");
 exports.createProduct = async (req,res) =>{
        try{
         const{title,description,price,stock=0,category_id,sku,images=[]} = req.body;
+        
+    if (!title|| !description || !price || !stock || !category_id) {
+      return res.status(400).json({
+        status: "error",
+        message: "title, price, stock and category_id fields are required"
+      });
+    }
         const [id] = await db("products").insert({
              title,description,price,stock,category_id,sku });
              if(Array.isArray(images) && images.length > 0){
@@ -100,6 +107,7 @@ exports.getProduct = async (req, res, next) => {
          res.json({ status: "err", message: "get products show error" });
   }
 };
+
 exports.listProducts = async (req, res, next) => {
   try {
     const page = Number(req.query.page) || 1;
@@ -110,17 +118,45 @@ exports.listProducts = async (req, res, next) => {
       .select("products.*", "categories.name as category")
       .leftJoin("categories", "products.category_id", "categories.id");
 
-    // filters
+    // category filter
     if (req.query.category_id)
       base.where("products.category_id", req.query.category_id);
 
+    // keyword search
     if (req.query.q)
       base.where("products.title", "like", `%${req.query.q}%`);
 
-    const products = await base
-      .limit(limit)
-      .offset(offset)
-      .orderBy("created_at", "desc");
+    // price range
+    if (req.query.minPrice)
+      base.where("products.price", ">=", Number(req.query.minPrice));
+
+    if (req.query.maxPrice)
+      base.where("products.price", "<=", Number(req.query.maxPrice));
+
+    // sorting
+    if (req.query.sort) {
+      switch (req.query.sort) {
+        case "price_low_high":
+          base.orderBy("products.price", "asc");
+          break;
+        case "price_high_low":
+          base.orderBy("products.price", "desc");
+          break;
+        case "newest":
+          base.orderBy("products.created_at", "desc");
+          break;
+        case "oldest":
+          base.orderBy("products.created_at", "asc");
+          break;
+        case "popular":
+          base.orderBy("products.sold_count", "desc");
+          break;
+      }
+    } else {
+      base.orderBy("products.created_at", "desc");
+    }
+
+    const products = await base.limit(limit).offset(offset);
 
     // total count
     const [{ count }] = await db("products").count("id as count");
@@ -128,7 +164,7 @@ exports.listProducts = async (req, res, next) => {
     res.json({ products, total: Number(count) });
 
   } catch (err) {
-      console.log(err)
-         res.json({ status: "err", message: "products listing show error" });
+    console.log(err)
+    res.json({ status: "err", message: "products listing show error" });
   }
 };
