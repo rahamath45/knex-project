@@ -4,6 +4,7 @@ const auth = require("../middlewares/authmiddlewares");
 
 router.use(auth);
 
+router.post("/addresses",ctrl.createAddress);
 router.post("/create", ctrl.createOrderFromCart);
 router.post("/confirm", ctrl.confirmStripePayment);
 
