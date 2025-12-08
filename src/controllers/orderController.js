@@ -55,6 +55,107 @@ exports.createAddress = async (req, res) => {
     res.status(500).json({ message: "Address creation failed" });
   }
 };
+exports.editAddress = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const { id } = req.params;
+
+    const address = await db("addresses")
+      .where({ id, user_id })
+      .first();
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    if (address.is_deleted) {
+      return res.status(400).json({ message: "Address already deleted" });
+    }
+
+    const {
+      name,
+      line1,
+      line2,
+      city,
+      state,
+      postal_code,
+      country,
+      phone,
+      is_default,
+    } = req.body;
+
+    await db("addresses")
+      .where({ id })
+      .update({
+        name,
+        line1,
+        line2,
+        city,
+        state,
+        postal_code,
+        country,
+        phone,
+        is_default: is_default ? 1 : 0,
+      });
+
+    res.json({
+      success: true,
+      message: "Address updated successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Address update failed" });
+  }
+};
+exports.deleteAddress = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const { id } = req.params;
+
+    const address = await db("addresses")
+      .where({ id, user_id })
+      .first();
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    if (address.is_deleted) {
+      return res.status(400).json({ message: "Address already deleted" });
+    }
+
+    await db("addresses")
+      .where({ id })
+      .update({ is_deleted: true });
+
+    res.json({
+      success: true,
+      message: "Address soft-deleted successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to delete address" });
+  }
+};
+exports.listAddresses = async (req, res) => {
+  try {
+    const user_id = req.user.id;
+
+    const addresses = await db("addresses")
+      .where({ user_id, is_deleted: false })
+      .orderBy("is_default", "desc")
+      .orderBy("id", "desc");
+
+    res.json({
+      success: true,
+      addresses,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to fetch addresses" });
+  }
+};
+
 
 exports.createOrderFromCart = async (req, res) => {
   const trx = await db.transaction();
