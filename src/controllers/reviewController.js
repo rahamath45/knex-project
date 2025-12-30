@@ -22,7 +22,6 @@ exports.addReview = async (req,res) =>{
         .update({ rating, comment });
 
     } else {
-      // Insert new review
       await db("reviews").insert({
         user_id,
         product_id,

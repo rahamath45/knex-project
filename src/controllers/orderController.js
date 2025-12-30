@@ -2,6 +2,7 @@ const db = require("../config/db");
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const shipping = require("../config/shipping");
+const { checkLowStock } = require("../utils/inventoryAlert");
 
 exports.createAddress = async (req, res) => {
   try {
@@ -214,6 +215,9 @@ exports.createOrderFromCart = async (req, res) => {
         .where({ id: it.product_id })
         .decrement("stock", it.quantity);
     }
+
+    // check inventory alert
+    await checkLowStock(it.product_id,trx);
 
     // Convert cart items to Stripe checkout format
     const line_items = items.map((it) => ({

@@ -4,6 +4,35 @@ module.exports = {
   // -------------------------------
   // 1. Users List
   // -------------------------------
+
+getInventoryAlerts : async (req,res) => {
+     try {
+    const alerts = await db("notifications")
+      .where({ type: "low_stock" })
+      .orderBy("created_at", "desc");
+
+    res.json({ success: true, alerts });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching alerts" });
+  }
+},
+
+markAlertRead:async (req,res) =>{
+        try{
+          const { id } = req.params;
+          await db("notification")
+              .where({ id })
+              .update({ is_read :true});
+
+           res.json({ success:true })
+
+        }catch(err){
+          res.status(500).json({ message:"Error updating alert"})
+        }
+},
+
+
+
   getUsers: async (req, res) => {
     try {
       const users = await db("users")

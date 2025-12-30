@@ -13,4 +13,6 @@ router.get("/monthly-revenue", adminAuth, adminCtrl.monthlyRevenue);
 router.post("/products/bulk-upload", adminAuth, upload.single("file"), adminbulkCtrl.bulkUpload);
 router.get("/products/download", adminAuth, adminbulkCtrl.downloadProducts);
 
+router.get("/inventory-alerts",adminAuth,adminCtrl.getInventoryAlerts);
+router.put("inventory-alerts/:id/read",adminAuth,adminCtrl.markAlertRead);
 module.exports = router;
